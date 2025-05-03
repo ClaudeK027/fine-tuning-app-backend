@@ -1,3 +1,5 @@
+# fine-tuning-app-backend/core/settings.py
+
 """
 Django settings for core project.
 
@@ -14,19 +16,19 @@ from pathlib import Path
 import os
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
-BASE_DIR = Path(__file__).resolve().parent.parent
+BASE_DIR = Path(__file__) .resolve().parent.parent
 
 
 # Quick-start development settings - unsuitable for production
 # See https://docs.djangoproject.com/en/4.2/howto/deployment/checklist/
 
 # SECURITY WARNING: keep the secret key used in production secret!
-SECRET_KEY = 'django-insecure-f4i4qgn0t@9h+ewmen*uwizv*le!m656c_8etyz2t4m=c_f8d-'
+SECRET_KEY = os.environ.get('SECRET_KEY', 'django-insecure-f4i4qgn0t@9h+ewmen*uwizv*le!m656c_8etyz2t4m=c_f8d-')  # Utilise .env ou valeur par défaut
 
 # SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = True
+DEBUG = os.environ.get('DEBUG', 'True') == 'True' # Utilise .env ou valeur par défaut
 
-ALLOWED_HOSTS = ['backend']
+ALLOWED_HOSTS = ['backend', 'localhost', '127.0.0.1'] # Ajout localhost/127.0.0.1 pour tests locaux éventuels
 
 
 # Application definition
@@ -43,11 +45,15 @@ INSTALLED_APPS = [
     'corsheaders',
     # Vos applications locales
     'api',
+    # Ajoutez django_celery_results si vous voulez stocker les résultats en BDD
+    # 'django_celery_results', # Optionnel pour l'instant
 ]
 
 MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
+    # Ajout de CorsMiddleware (généralement près du haut, après SessionMiddleware)
+    'corsheaders.middleware.CorsMiddleware',
     'django.middleware.common.CommonMiddleware',
     'django.middleware.csrf.CsrfViewMiddleware',
     'django.contrib.auth.middleware.AuthenticationMiddleware',
@@ -55,11 +61,13 @@ MIDDLEWARE = [
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
 ]
 
-CORS_ALLOW_ALL_ORIGINS = True
-'''CORS_ALLOWED_ORIGINS = [
-    "http://localhost:3000", # L'URL où tournera votre frontend React
-    "http://127.0.0.1:3000", # Parfois nécessaire selon le navigateur/OS
-]'''
+# Configuration CORS (Allow all pour le dev, à restreindre en prod)
+CORS_ALLOW_ALL_ORIGINS = True 
+# Alternative plus restrictive:
+# CORS_ALLOWED_ORIGINS = [
+#    "http://localhost:5173", # Port Vite par défaut
+#    "http://127.0.0.1:5173",
+# ]
 
 
 ROOT_URLCONF = 'core.urls'
@@ -89,11 +97,11 @@ WSGI_APPLICATION = 'core.wsgi.application'
 DATABASES = {
     'default': {
         'ENGINE': 'django.db.backends.postgresql',
-        'NAME': os.environ.get('DB_NAME'),
-        'USER': os.environ.get('DB_USER'),
-        'PASSWORD': os.environ.get('DB_PASSWORD'),
-        'HOST': os.environ.get('DB_HOST'), # Doit correspondre au nom du service 'db' dans docker-compose
-        'PORT': os.environ.get('DB_PORT'),
+        'NAME': os.environ.get('DB_NAME', 'finetuning_db') , # Ajout valeur par défaut
+        'USER': os.environ.get('DB_USER', 'user'),       # Ajout valeur par défaut
+        'PASSWORD': os.environ.get('DB_PASSWORD', 'password'), # Ajout valeur par défaut
+        'HOST': os.environ.get('DB_HOST', 'db'),           # Ajout valeur par défaut (nom service docker)
+        'PORT': os.environ.get('DB_PORT', '5432'),       # Ajout valeur par défaut
     }
 }
 
@@ -120,7 +128,7 @@ AUTH_PASSWORD_VALIDATORS = [
 # Internationalization
 # https://docs.djangoproject.com/en/4.2/topics/i18n/
 
-LANGUAGE_CODE = 'en-us'
+LANGUAGE_CODE = 'fr-fr' # Changé pour le français
 
 TIME_ZONE = 'UTC'
 
@@ -129,16 +137,45 @@ USE_I18N = True
 USE_TZ = True
 
 
-# Static files (CSS, JavaScript, Images)
+# Static files (CSS, JavaScript, Images) 
 # https://docs.djangoproject.com/en/4.2/howto/static-files/
 
 STATIC_URL = '/static/'
-STATIC_ROOT = os.path.join(BASE_DIR, 'staticfiles') # Pour la collecte en production
+STATIC_ROOT = os.path.join(BASE_DIR, 'staticfiles')  # Pour la collecte en production
 
+# Media files (User uploaded content)
 MEDIA_URL = '/media/'
 MEDIA_ROOT = os.path.join(BASE_DIR, 'media') # Où les fichiers uploadés seront stockés
+
 
 # Default primary key field type
 # https://docs.djangoproject.com/en/4.2/ref/settings/#default-auto-field
 
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
+
+
+# --- Configuration Celery --- 
+# URL du broker (Redis) 
+# Utilise le nom de service 'redis' qui sera défini dans docker-compose.yml
+CELERY_BROKER_URL = os.environ.get('CELERY_BROKER_URL', 'redis://redis:6379/0')
+
+# URL du backend de résultats (Redis également ici)
+CELERY_RESULT_BACKEND = os.environ.get('CELERY_RESULT_BACKEND', 'redis://redis:6379/0')
+
+# Accepter le contenu JSON
+CELERY_ACCEPT_CONTENT = ['json']
+CELERY_TASK_SERIALIZER = 'json'
+CELERY_RESULT_SERIALIZER = 'json'
+
+# Fuseau horaire
+CELERY_TIMEZONE = TIME_ZONE # Utilise le TIME_ZONE de Django ('UTC')
+
+# Optionnel: Configuration pour django-celery-results si utilisé
+# CELERY_RESULT_EXTENDED = True
+# CELERY_RESULT_BACKEND = 'django-db'
+# CELERY_CACHE_BACKEND = 'django-cache'
+
+# Pour l'avertissement de dépréciation (optionnel)
+# broker_connection_retry_on_startup = True
+
+# --- Fin Configuration Celery ---
