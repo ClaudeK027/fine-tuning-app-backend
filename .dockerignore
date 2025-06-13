@@ -1,0 +1,28 @@
+# Git
+.git
+.gitignore
+
+# Environnements virtuels Python
+.venv
+venv
+env
+
+# Cache Python et fichiers compilés
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+
+# Fichiers de configuration IDE
+.vscode/
+.idea/
+
+# Base de données locale de développement
+db.sqlite3
+
+# Fichiers de logs
+*.log
+
+# Fichiers système d'exploitation
+.DS_Store
+Thumbs.db 

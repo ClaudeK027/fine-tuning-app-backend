@@ -1,0 +1,24 @@
+Django~=4.2
+djangorestframework~=3.14
+celery~=5.3
+redis~=5.0
+torch~=2.3
+transformers~=4.41
+# Ajout pour la gestion de datasets structurés
+datasets~=2.19
+# Dépendances pour le serveur ASGI
+daphne
+channels
+channels_redis
+# Optionnel mais recommandé pour les variables d'environnement
+python-dotenv
+# Pour la gestion CORS
+django-cors-headers
+# Pour l'accélération de l'entraînement
+accelerate
+# Pour le support de Celery sous Windows (même si on utilise Docker)
+eventlet
+# Pour les métriques d'évaluation
+scikit-learn
+# Dépendance requise par transformers pour certaines opérations
+protobuf
